@@ -16,10 +16,14 @@ interface PeerJSDataConnection {
 }
 
 interface PeerJSPeer {
+  disconnected: boolean;
+  destroyed: boolean;
   on(event: 'open', cb: (id: string) => void): void;
   on(event: 'connection', cb: (conn: PeerJSDataConnection) => void): void;
+  on(event: 'disconnected', cb: () => void): void;
   on(event: 'error', cb: (err: PeerJSError) => void): void;
   connect(peerId: string, options?: { reliable?: boolean; serialization?: string }): PeerJSDataConnection;
+  reconnect(): void;
   destroy(): void;
 }
 

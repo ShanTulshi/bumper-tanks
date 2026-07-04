@@ -39,6 +39,12 @@ export class HostLobby {
     this.handlers = handlers;
     this.peer = new window.Peer(PEER_PREFIX + code, { debug: 1 });
     this.peer.on('open', () => handlers.onOpen?.());
+    this.peer.on('disconnected', () => {
+      // The broker socket dropped (idle timeout, network blip, phone sleep).
+      // Existing games keep flowing P2P, but new joins need the broker —
+      // re-register the lobby code. PeerJS does not do this by itself.
+      if (!this.peer.destroyed) this.peer.reconnect();
+    });
     this.peer.on('error', (err) => handlers.onError?.(err));
     this.peer.on('connection', (conn) => {
       conn.on('open', () => {
@@ -91,6 +97,9 @@ export class GuestConnection {
   constructor(code: string, handlers: GuestConnectionHandlers) {
     this.handlers = handlers;
     this.peer = new window.Peer({ debug: 1 });
+    this.peer.on('disconnected', () => {
+      if (!this.peer.destroyed) this.peer.reconnect();
+    });
     this.peer.on('error', (err) => handlers.onError?.(err));
     this.peer.on('open', () => {
       this.conn = this.peer.connect(PEER_PREFIX + code, { reliable: true, serialization: 'json' });

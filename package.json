@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "node tools/stamp-version.mjs && tsc",
     "watch": "tsc --watch",
     "balance": "npm run build && node tools/balance-brawl.mjs",
     "maps": "npm run build && node tools/map-check.mjs"

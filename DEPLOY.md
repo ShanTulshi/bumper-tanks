@@ -51,6 +51,25 @@ gh api repos/{owner}/bumper-tanks/pages -X POST \
 - Smoke test: open the URL, **Host arena**, scan the QR with a phone,
   confirm the second tank appears in the lobby, then **Launch**.
 
+## Caching
+
+GitHub Pages serves every asset with a fixed `Cache-Control: max-age=600`
+(10 minutes) — custom headers aren't configurable. Phones are worse: mobile
+browsers restore a backgrounded tab from memory with the old JS still running,
+which no HTTP header can fix. The app therefore updates itself:
+
+- `npm run build` stamps the build time into `version.json` (fetched at
+  runtime with `cache: no-store`) and `src/build-info.ts` (compiled in).
+- The page re-checks `version.json` on load, whenever the tab regains focus,
+  and every 5 minutes; when a newer build is live it reloads itself — but only
+  from the main menu, never mid-match or mid-lobby.
+- Hosts reject guests whose `PROTOCOL_VERSION` doesn't match ("out of date —
+  refresh the page"), so mixed-version lobbies fail loudly. Bump that constant
+  in `src/game/constants.ts` whenever the wire format changes.
+
+So after a deploy: pages already open converge within ~10 minutes or on the
+next app switch, whichever comes first.
+
 ## Notes
 
 - Anything pushed to `main` goes live. To gate releases, switch the Pages

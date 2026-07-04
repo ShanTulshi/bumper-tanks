@@ -2,8 +2,9 @@
 
 import {
   PLAYER_COLORS, randomCallsign, SNAPSHOT_HZ, MAX_PLAYERS,
-  RESPAWN_TIME, LTS_ROUND_WINS,
+  RESPAWN_TIME, LTS_ROUND_WINS, PROTOCOL_VERSION,
 } from './game/constants.js';
+import { BUILD } from './build-info.js';
 import { MAPS, mapById, randomMap } from './game/maps.js';
 import { createMatch, step as simStep, applyTap, addTank, removeTank, getTank } from './game/sim.js';
 import { stepBots } from './game/bots.js';
@@ -50,6 +51,8 @@ interface GuestCtx {
   myId: PlayerId | null;
   roster: RosterEntry[];
   conn: GuestConnection | null;
+  rejected: boolean;
+  settled: boolean; // welcomed, rejected, errored, or closed — stop the join timer
 }
 
 let host: HostCtx | null = null;
@@ -82,6 +85,7 @@ function showScreen(name: ScreenName): void {
     el.classList.toggle('hidden', key !== name);
   }
   $('hud').classList.toggle('hidden', name !== null);
+  if (name === 'menu') maybeApplyUpdate();
 }
 
 function setAccent(idx: number): void {
@@ -641,9 +645,17 @@ function startHosting(): void {
     onMessage: (peerId, msg) => {
       if (!host) return;
       if (msg.t === MSG.HELLO) {
+        const reject = (reason: string): void => {
+          host?.lobby?.sendTo(peerId, { t: MSG.REJECT, reason });
+          // Give the reason time to flush before closing the connection.
+          setTimeout(() => host?.lobby?.kick(peerId), 400);
+        };
+        if (msg.v !== PROTOCOL_VERSION) {
+          reject('out of date — refresh the page');
+          return;
+        }
         if (host.roster.length >= MAX_PLAYERS) {
-          host.lobby?.sendTo(peerId, { t: MSG.REJECT, reason: 'arena full' });
-          host.lobby?.kick(peerId);
+          reject('arena full');
           return;
         }
         const used = new Set(host.roster.map((p) => p.colorIdx));
@@ -700,19 +712,39 @@ function hostLaunch(): void {
 
 // ---------------------------------------------------------------- guest flow
 
-function connectAsGuest(code: string): void {
+const JOIN_TIMEOUT_MS = 8000;
+const JOIN_ATTEMPTS = 3;
+
+function connectAsGuest(code: string, attempt = 0): void {
   endSession();
   startAttract();
-  $('join-status').textContent = 'connecting…';
+  $('join-status').textContent = attempt === 0 ? 'connecting…' : `arena network is slow — retrying (${attempt + 1}/${JOIN_ATTEMPTS})…`;
   $('join-status').classList.remove('error');
-  const ctx: GuestCtx = { code, myId: null, roster: [], conn: null };
+  const ctx: GuestCtx = { code, myId: null, roster: [], conn: null, rejected: false, settled: false };
   guest = ctx;
+  // The public signaling broker can drop mid-handshake, which would otherwise
+  // hang on "connecting…" forever. Time out and redo the whole handshake.
+  setTimeout(() => {
+    if (ctx.settled || guest !== ctx) return;
+    ctx.settled = true;
+    ctx.conn?.destroy();
+    guest = null;
+    if (attempt + 1 < JOIN_ATTEMPTS) {
+      connectAsGuest(code, attempt + 1);
+    } else {
+      $('join-status').textContent = 'could not reach the arena — try again in a minute';
+      $('join-status').classList.add('error');
+      showScreen('join');
+    }
+  }, JOIN_TIMEOUT_MS);
   ctx.conn = new GuestConnection(code, {
     onOpen: () => {
       ctx.conn?.send(hello(myName));
       $('join-status').textContent = 'joining lobby…';
     },
     onError: (err) => {
+      if (ctx.rejected || guest !== ctx) return; // resolved or superseded by a retry
+      ctx.settled = true;
       const reason = err.type === 'peer-unavailable' ? 'no arena with that code' : `connection failed: ${err.type || err.message}`;
       $('join-status').textContent = reason;
       $('join-status').classList.add('error');
@@ -721,6 +753,8 @@ function connectAsGuest(code: string): void {
       showScreen('join');
     },
     onClose: () => {
+      if (ctx.rejected || guest !== ctx) return; // resolved or superseded by a retry
+      ctx.settled = true;
       // Host vanished.
       endSession();
       ctx.conn?.destroy();
@@ -733,7 +767,10 @@ function connectAsGuest(code: string): void {
     onMessage: (msg: HostMsg) => {
       if (msg.t === MSG.WELCOME) {
         ctx.myId = msg.yourId;
+        ctx.settled = true;
       } else if (msg.t === MSG.REJECT) {
+        ctx.rejected = true;
+        ctx.settled = true;
         $('join-status').textContent = msg.reason || 'rejected';
         $('join-status').classList.add('error');
         ctx.conn?.destroy();
@@ -947,25 +984,76 @@ function leaveEverything(): void {
   setAccent(0);
   startAttract();
   showScreen('menu');
+  maybeApplyUpdate();
 }
+
+// ---------------------------------------------------------------- self-update
+// GitHub Pages serves everything with a fixed max-age (~10 min) and phones
+// resume the tab with the old JS still running, so the app checks a no-store
+// version stamp itself and reloads when a new build is live.
+
+let updateReady = false;
+
+async function checkForUpdate(): Promise<void> {
+  try {
+    const res = await fetch('version.json', { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = (await res.json()) as { build?: string };
+    if (data.build && data.build !== BUILD) {
+      updateReady = true;
+      maybeApplyUpdate();
+    }
+  } catch {
+    // Offline or local file:// — nothing to do.
+  }
+}
+
+function maybeApplyUpdate(): void {
+  // Only reload from the menu: never yank someone out of a match, a lobby
+  // they're hosting/visiting, or a playground run.
+  const onMenu = (session === null || (session instanceof LocalSession && session.attract))
+    && !host && !guest;
+  if (!updateReady || !onMenu) return;
+  // If a stubborn cache keeps serving the old build, don't reload-loop.
+  const lastReload = Number(sessionStorage.getItem('bumper-tanks-reloaded') || 0);
+  if (Date.now() - lastReload < 60_000) return;
+  sessionStorage.setItem('bumper-tanks-reloaded', String(Date.now()));
+  location.reload();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkForUpdate();
+});
+setInterval(checkForUpdate, 5 * 60 * 1000);
+checkForUpdate();
 
 // ---------------------------------------------------------------- boot
 
-function boot(): void {
-  const hash = location.hash;
-  const joinMatch = hash.match(/#join=([A-Za-z0-9]+)/);
-  startAttract();
-  if (joinMatch) {
-    try { history.replaceState(null, '', location.pathname + location.search); } catch { /* file:// */ }
-    showScreen('join');
-    ($('join-code') as HTMLInputElement).value = joinMatch[1].toUpperCase();
-    connectAsGuest(joinMatch[1].toUpperCase());
-  } else if (hash === '#playground') {
-    startPlayground();
-  } else {
-    showScreen('menu');
-  }
+function joinFromHash(): boolean {
+  const joinMatch = location.hash.match(/#join=([A-Za-z0-9]+)/);
+  if (!joinMatch) return false;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch { /* file:// */ }
+  const code = joinMatch[1].toUpperCase();
+  showScreen('join');
+  ($('join-code') as HTMLInputElement).value = code;
+  connectAsGuest(code);
+  return true;
 }
+
+function boot(): void {
+  startAttract();
+  if (joinFromHash()) return;
+  if (location.hash === '#playground') startPlayground();
+  else showScreen('menu');
+}
+
+// Scanning a QR while the game tab is already open only changes the hash —
+// no reload, no fresh boot(). Pick the code up from here instead.
+window.addEventListener('hashchange', () => {
+  const idle = !host && !guest
+    && (session === null || (session instanceof LocalSession && session.attract));
+  if (idle) joinFromHash();
+});
 
 // Debug/validation hooks (used by agent-browser checks).
 window.__game = {
@@ -979,6 +1067,8 @@ window.__game = {
   },
   startPlayground,
   leaveEverything,
+  checkForUpdate,
+  BUILD,
 };
 
 boot();

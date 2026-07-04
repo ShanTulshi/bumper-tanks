@@ -110,3 +110,30 @@ Criterion for every call: **optimize for fun**. Newest at the bottom.
     center into a crossroads. Side effect: Skywalk went from the sleepiest map
     (12 KOs/5 min) to fully lively (50) now that fights can actually reach
     each other.
+
+## 2026-07-04
+
+31. **Self-updating pages instead of cache headers (requested — phone kept a
+    stale page).** GitHub Pages headers are fixed at max-age=600 and phones
+    resume tabs from memory with old JS running, so no header can fix it.
+    Every build stamps `version.json` + a compiled-in `BUILD`; the page
+    re-checks the stamp (no-store) on load, on tab focus, and every 5 min,
+    and reloads itself — only from the menu, never mid-match/lobby, with a
+    60 s guard against reload loops. Hosts also reject protocol-mismatched
+    guests with "out of date — refresh the page" instead of failing weirdly.
+32. **Scanning a QR into an already-open tab now works.** A second `#join=`
+    link only fires `hashchange` (no reload, no boot), which used to be
+    silently ignored — found when a stale test page "joined" an old lobby
+    code. Handled now (only when idle at the menu, never mid-session).
+33. **Lobbies survive broker drops.** The PeerJS cloud websocket dies on
+    idle/sleep/blips and PeerJS never reconnects by itself — after that, new
+    guests couldn't discover the lobby even though the host looked fine
+    (phones hit this on every screen lock). Both peers now auto-`reconnect()`
+    on `disconnected`.
+34. **Joins time out and retry (3× 8 s) instead of hanging on "connecting…"
+    forever** when signaling dies mid-handshake, then fail honestly with
+    "could not reach the arena". Found because the public broker got flaky
+    (likely rate-limited) under test churn — the retry ladder and messaging
+    are verified; it also means the free `0.peerjs.com` broker is the
+    weakest link. If it bites real players, options: self-host peerjs-server
+    (one tiny container) or pin an alternate public broker.
