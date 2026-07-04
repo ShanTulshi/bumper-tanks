@@ -471,6 +471,13 @@ input.field:focus {
   text-align: center;
 }
 
+@media (max-width: 640px) {
+  /* Keep the sandbox controls clear of the corner buttons. */
+  #playground-bar {
+    bottom: calc(max(12px, env(safe-area-inset-bottom)) + 48px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .feed-entry, .center-big { animation: none; }
 }

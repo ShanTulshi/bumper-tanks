@@ -289,7 +289,7 @@ class LocalSession {
     this.botCount++;
     addTank(this.state, {
       id: `bot-${Date.now()}-${this.botCount}`,
-      name: randomCallsign(),
+      name: randomCallsign(this.state.tanks.map((t) => t.name)),
       colorIdx: idx % PLAYER_COLORS.length,
       isBot: true,
       botSkill: 0.55 + Math.random() * 0.35,
@@ -479,18 +479,16 @@ function endSession() {
 function startAttract() {
   endSession();
   const map = randomMap();
+  const names = [];
   session = new LocalSession({
     mode: 'sandbox',
     mapId: map.id,
     myId: null,
     attract: true,
-    players: [0, 1, 2, 3].map((i) => ({
-      id: `attract-${i}`,
-      name: randomCallsign(),
-      colorIdx: [0, 1, 2, 3][i],
-      isBot: true,
-      botSkill: 0.75,
-    })),
+    players: [0, 1, 2, 3].map((i) => {
+      names.push(randomCallsign(names));
+      return { id: `attract-${i}`, name: names[i], colorIdx: i, isBot: true, botSkill: 0.75 };
+    }),
   });
 }
 
@@ -746,11 +744,15 @@ function startPlayground() {
     mapId: map.id,
     myId: 'me',
     playground: true,
-    players: [
-      { id: 'me', name: myName, colorIdx: 0, isBot: false },
-      { id: 'bot-a', name: randomCallsign(), colorIdx: 1, isBot: true, botSkill: 0.7 },
-      { id: 'bot-b', name: randomCallsign(), colorIdx: 2, isBot: true, botSkill: 0.6 },
-    ],
+    players: (() => {
+      const a = randomCallsign([myName]);
+      const b = randomCallsign([myName, a]);
+      return [
+        { id: 'me', name: myName, colorIdx: 0, isBot: false },
+        { id: 'bot-a', name: a, colorIdx: 1, isBot: true, botSkill: 0.7 },
+        { id: 'bot-b', name: b, colorIdx: 2, isBot: true, botSkill: 0.6 },
+      ];
+    })(),
   });
   centerMessage('PLAYGROUND', map.name, 2);
 }
@@ -831,7 +833,7 @@ $('btn-add-bot').addEventListener('click', () => {
   while (used.has(idx)) idx++;
   host.roster.push({
     id: `bot-${idx}-${Math.floor(Math.random() * 1e6)}`,
-    name: randomCallsign(),
+    name: randomCallsign(host.roster.map((p) => p.name)),
     colorIdx: idx,
     isBot: true,
     botSkill: 0.55 + Math.random() * 0.35,
@@ -884,7 +886,7 @@ function startPlaygroundOn(mapId, botCount) {
   endSession();
   const players = [{ id: 'me', name: myName, colorIdx: 0, isBot: false }];
   for (let i = 0; i < botCount; i++) {
-    players.push({ id: `bot-${i}`, name: randomCallsign(), colorIdx: (i + 1) % PLAYER_COLORS.length, isBot: true, botSkill: 0.55 + Math.random() * 0.35 });
+    players.push({ id: `bot-${i}`, name: randomCallsign(players.map((p) => p.name)), colorIdx: (i + 1) % PLAYER_COLORS.length, isBot: true, botSkill: 0.55 + Math.random() * 0.35 });
   }
   session = new LocalSession({ mode: 'sandbox', mapId, myId: 'me', playground: true, players });
   centerMessage('PLAYGROUND', mapById(mapId).name, 1.5);

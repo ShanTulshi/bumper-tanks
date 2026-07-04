@@ -65,3 +65,23 @@ Criterion for every call: **optimize for fun**. Newest at the bottom.
     the void are worth outplaying; scores now come from real knockouts.
 21. **Death camera drifts back to the arena center** instead of staring at the
     empty void where you fell.
+22. **Built a headless balance harness** (`tools/balance-brawl.mjs`) — the sim is
+    pure ES modules, so Node runs 4-bot × 5-minute brawls on every map in ~2s.
+    This became the tuning loop.
+23. **Knockback economy retuned for liveliness.** The first playable was a total
+    stalemate (0 KOs in 5 min on 3 of 4 maps). Now: HIT 460→640, AoE 270→340,
+    damping 1.9→1.55 (icier), Rink shrunk 1340→1240. Result: 43–66 KOs/5min on
+    Rink/Donut/Quad, ~100 % credited, and skill wins (0.89-skill bot goes 27/11
+    while 0.50 goes 8/21). Skywalk is slower (9) by nature — it's the tactical map.
+24. **Bots path with recoil, greedily.** Out-of-range bots sample 12 shot
+    directions and take the recoil-safe one whose drift lands nearest the enemy —
+    emergent bridge-crossing on island maps with zero pathfinding code.
+25. **Bots got human weaknesses on purpose**: 0.1–0.4 s reaction delay and flinch
+    error on the survival reflex. Perfect-reflex bots were literally unkillable
+    (0 deaths in 5 min); now a well-timed edge shot beats their brake.
+26. **Verified end-to-end multiplayer with two real browsers** (agent-browser
+    sessions): QR/code join, launch, guest tap → host sim → snapshot → both HUDs
+    agree on scores, match end, winner screen, rematch. Also verified: equal-area
+    zoom on a 390×844 phone viewport is exactly the 1.15 M wu² constant.
+27. **Callsigns are unique per session/lobby** (two JUNIPERs showed up in a
+    playtest and made the killfeed ambiguous).

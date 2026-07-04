@@ -63,6 +63,8 @@ export const CALLSIGNS = [
   'ZIGZAG', 'MOXIE', 'RUCKUS', 'FABLE', 'TURBO', 'NIMBUS', 'JACKAL', 'SPROCKET',
 ];
 
-export function randomCallsign() {
-  return CALLSIGNS[Math.floor(Math.random() * CALLSIGNS.length)];
+export function randomCallsign(taken = []) {
+  const free = CALLSIGNS.filter((c) => !taken.includes(c));
+  const pool = free.length ? free : CALLSIGNS;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
