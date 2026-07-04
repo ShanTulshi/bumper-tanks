@@ -1,5 +1,5 @@
 // Headless bot brawl: 4 bots, all maps, accelerated — the balance-tuning loop.
-// Usage: node tools/balance-brawl.mjs
+// Usage: npm run build && node tools/balance-brawl.mjs  (imports compiled js/)
 import { createMatch, step } from '../js/game/sim.js';
 import { stepBots } from '../js/game/bots.js';
 import { MAPS } from '../js/game/maps.js';

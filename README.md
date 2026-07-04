@@ -27,8 +27,20 @@ no backend at all — it deploys anywhere static files go (GitHub Pages, etc.).
 
 ## Development
 
-No build step. ES modules + Canvas 2D + WebAudio. All gameplay tuning lives in
-`js/game/constants.js`; the simulation (`js/game/sim.js`) is a pure module used
-identically by solo play, the multiplayer host, and the menu's attract mode.
+TypeScript sources in `src/`, compiled by `tsc` to plain browser ES modules in
+`js/` (committed so branch-based GitHub Pages deploys work — build before you
+push). No bundler; the browser loads the modules directly. Canvas 2D + WebAudio,
+zero runtime dependencies beyond the two vendored libs.
+
+```sh
+npm install
+npm run build     # or: npm run watch
+npm run balance   # headless bot-brawl balance report (tools/balance-brawl.mjs)
+```
+
+All gameplay tuning lives in `src/game/constants.ts`; the simulation
+(`src/game/sim.ts`) is a pure module used identically by solo play, the
+multiplayer host, the menu's attract mode, and the headless balance harness.
 
 Design docs: `docs/superpowers/specs/`. Decision log: `DECISIONS.md`.
+Deploying: `DEPLOY.md`.

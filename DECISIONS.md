@@ -85,3 +85,12 @@ Criterion for every call: **optimize for fun**. Newest at the bottom.
     zoom on a 390×844 phone viewport is exactly the 1.15 M wu² constant.
 27. **Callsigns are unique per session/lobby** (two JUNIPERs showed up in a
     playtest and made the killfeed ambiguous).
+28. **Converted to TypeScript (strict) without giving up the no-bundler runtime.**
+    Sources live in `src/`, `tsc` emits the same plain-ES-module `js/` tree the
+    browser was already loading; `index.html` unchanged. Compiled `js/` stays
+    committed so branch-based GitHub Pages deploys keep working (build before
+    push — see `DEPLOY.md`). Discriminated unions type the wire protocol and sim
+    events; `RenderState` is the structural interface both the sim and the
+    guest's interpolated ghost state satisfy. Verified post-conversion: clean
+    strict compile, identical balance-harness profile, and a two-browser
+    lobby → launch → tap round-trip on the compiled build.

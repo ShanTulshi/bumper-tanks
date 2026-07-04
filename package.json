@@ -1,0 +1,13 @@
+{
+  "name": "bumper-tanks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "balance": "npm run build && node tools/balance-brawl.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
