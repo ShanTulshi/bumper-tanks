@@ -36,6 +36,7 @@ zero runtime dependencies beyond the two vendored libs.
 npm install
 npm run build     # or: npm run watch
 npm run balance   # headless bot-brawl balance report (tools/balance-brawl.mjs)
+npm run maps      # floor connectivity + spawn sanity check (tools/map-check.mjs)
 ```
 
 All gameplay tuning lives in `src/game/constants.ts`; the simulation

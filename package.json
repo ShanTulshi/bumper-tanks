@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "balance": "npm run build && node tools/balance-brawl.mjs"
+    "balance": "npm run build && node tools/balance-brawl.mjs",
+    "maps": "npm run build && node tools/map-check.mjs"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

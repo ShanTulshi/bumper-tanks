@@ -63,8 +63,10 @@ export const MAPS = [
             rect(-640, 0, 660, 960, 140), // west platform
             rect(640, 0, 660, 960, 140), // east platform
             rect(0, 0, 720, 190, 70), // the bridge
-            rect(0, -560, 340, 300, 90), // north pod (jump-across bait)
+            rect(0, -560, 340, 300, 90), // north pod
             rect(0, 560, 340, 300, 90), // south pod
+            rect(0, -260, 170, 440, 60), // north spoke: pod ↔ bridge
+            rect(0, 260, 170, 440, 60), // south spoke
         ],
         holes: [],
         walls: [

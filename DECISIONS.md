@@ -101,3 +101,12 @@ Criterion for every call: **optimize for fun**. Newest at the bottom.
     rims. Verified at 10 wu past an edge (stays) vs 20 wu (falls), and the same
     at the Donut hole rim. Balance after: 54/49/32/12 KOs per 5 min — Quad
     dropped most (48→32), which is the unsatisfying corner deaths going away.
+30. **All floors must be one connected piece (requested).** Built a flood-fill
+    connectivity checker (`tools/map-check.mjs`, `npm run maps`) that also
+    verifies every spawn sits on the main component. It confirmed Skywalk's
+    N/S pods were unreachable islands — with two spawns stranded on them
+    ("jump-across bait" doesn't work in a game with no jumping). Fixed by
+    adding two spokes joining the pods to the central bridge, turning the
+    center into a crossroads. Side effect: Skywalk went from the sleepiest map
+    (12 KOs/5 min) to fully lively (50) now that fights can actually reach
+    each other.
