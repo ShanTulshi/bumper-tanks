@@ -40,3 +40,15 @@ Criterion for every call: **optimize for fun**. Newest at the bottom.
 12. **Bots move by recoil too** (same rules as players): aim at nearest target with
     error + lead, and when near an edge they fire outward to knock themselves back to
     safety. *Fun:* honest opponents that die to their own greed, just like humans.
+13. **The main menu is a live bot match** (attract mode) — the game sells itself
+    behind the panels, and the sim gets exercised constantly. *Fun:* you see the
+    game before you play it.
+14. **Host can add bots in the lobby** — two friends can still have a 4-tank brawl.
+15. **Late joiners drop straight into a running match** (as a ghost until next round
+    in Last-Standing). *Fun:* nobody waits at a locked door.
+16. **UI chrome is dyed in your player neon**, and the results screen re-dyes itself
+    in the winner's color — a little coronation.
+17. **Self-knockoffs are possible** (your own AoE can push you) and credited as
+    "slipped into the void" — no kill for anyone. Blast-jumping is a legit skill.
+18. **Audio is synthesized WebAudio** (no assets): thump on fire, noise-sweep
+    explosions, arpeggio win sting. Mute persists in localStorage.
