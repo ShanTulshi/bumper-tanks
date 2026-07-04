@@ -2,7 +2,7 @@
 // Survival reflex runs every tick; attacking happens on a human-ish cadence and
 // only when the shot's own recoil won't fling the bot into the void.
 
-import { SHELL_SPEED, TANK_RADIUS, RECOIL_IMPULSE, DAMPING } from './constants.js';
+import { SHELL_SPEED, SHELL_RANGE, TANK_RADIUS, RECOIL_IMPULSE, DAMPING } from './constants.js';
 import { applyTap } from './sim.js';
 import { supported, edgeMargin } from '../engine/physics.js';
 
@@ -14,19 +14,51 @@ export function stepBots(state, dt) {
     if (!tank.isBot || tank.state !== 'active') continue;
     tank.bot.nextThink -= dt;
 
-    // Survival reflex: every tick, not on the think timer. A queued brake shot
-    // fires the moment the barrel aligns and the cooldown clears.
+    // Survival reflex: checked every tick, but acts only after a human-ish
+    // reaction delay — a hard hit near the edge should beat the brake.
     const panic = panicDirection(state, tank);
     if (panic != null) {
-      applyTap(state, tank.id, tank.x + Math.cos(panic) * 200, tank.y + Math.sin(panic) * 200);
-      tank.bot.nextThink = Math.max(tank.bot.nextThink, 0.25);
+      tank.bot.dangerT += dt;
+      const reaction = 0.1 + (1 - tank.botSkill) * 0.3;
+      if (tank.bot.dangerT >= reaction) {
+        const flinch = (Math.random() - 0.5) * (1 - tank.botSkill) * 0.6;
+        const a = panic + flinch;
+        applyTap(state, tank.id, tank.x + Math.cos(a) * 200, tank.y + Math.sin(a) * 200);
+        tank.bot.nextThink = Math.max(tank.bot.nextThink, 0.25);
+      }
       continue;
     }
+    tank.bot.dangerT = 0;
 
     if (tank.bot.nextThink > 0) continue;
 
     const target = nearestEnemy(state, tank);
     let aim = null;
+    if (target && Math.hypot(target.x - tank.x, target.y - tank.y) > SHELL_RANGE * 0.8) {
+      // Out of range. Close the gap the only way anyone can: shoot in some
+      // direction and ride the recoil. Greedily pick the recoil-safe shot
+      // whose drift ends nearest the enemy — on island maps this walks bots
+      // across bridges instead of diving at the void between pods.
+      let bestAim = null;
+      let bestDist = Math.hypot(target.x - tank.x, target.y - tank.y) - 30;
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2 + Math.random() * 0.2;
+        if (!recoilSafe(state, tank, a)) continue;
+        const [rx, ry] = recoilRest(tank, a);
+        const d = Math.hypot(target.x - rx, target.y - ry);
+        if (d < bestDist) {
+          bestDist = d;
+          bestAim = a;
+        }
+      }
+      if (bestAim != null) {
+        applyTap(state, tank.id, tank.x + Math.cos(bestAim) * 200, tank.y + Math.sin(bestAim) * 200);
+        tank.bot.nextThink = 0.4 + Math.random() * 0.3;
+        continue;
+      }
+      // No safe way to close — fall through and take the long shot anyway;
+      // the blast might still splash them.
+    }
     if (target) {
       const dist = Math.hypot(target.x - tank.x, target.y - tank.y);
       const flight = dist / SHELL_SPEED;
@@ -57,16 +89,18 @@ export function stepBots(state, dt) {
   }
 }
 
-// Would firing along aimAngle recoil us somewhere fatal? Project the drift at
-// ~0.35s and at rest (total drift of velocity v under damping k is v/k).
-function recoilSafe(state, tank, aimAngle) {
+// Post-recoil drift: [restX, restY, midX, midY] — position at rest (total
+// drift of velocity v under damping k is v/k) and ~0.35s out.
+function recoilRest(tank, aimAngle) {
   const vx = tank.vx - Math.cos(aimAngle) * RECOIL_IMPULSE;
   const vy = tank.vy - Math.sin(aimAngle) * RECOIL_IMPULSE;
-  const margin = TANK_RADIUS * 0.9;
-  const midX = tank.x + vx * 0.35;
-  const midY = tank.y + vy * 0.35;
-  const restX = tank.x + vx / DAMPING;
-  const restY = tank.y + vy / DAMPING;
+  return [tank.x + vx / DAMPING, tank.y + vy / DAMPING, tank.x + vx * 0.35, tank.y + vy * 0.35];
+}
+
+// Would firing along aimAngle recoil us somewhere fatal?
+function recoilSafe(state, tank, aimAngle) {
+  const margin = TANK_RADIUS * 0.6; // brave enough to fight near the edge
+  const [restX, restY, midX, midY] = recoilRest(tank, aimAngle);
   return edgeMargin(state.map, midX, midY) > margin
     && edgeMargin(state.map, restX, restY) > margin;
 }

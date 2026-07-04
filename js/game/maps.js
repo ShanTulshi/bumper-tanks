@@ -10,7 +10,7 @@ export const MAPS = [
     id: 'rink',
     name: 'THE RINK',
     tagline: 'no cover · no excuses',
-    floors: [rect(0, 0, 1340, 1340, 320)],
+    floors: [rect(0, 0, 1240, 1240, 300)],
     holes: [],
     walls: [],
     spawns: [

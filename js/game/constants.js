@@ -4,15 +4,15 @@ export const TANK_RADIUS = 24;
 export const SHELL_RADIUS = 7;
 
 // Movement / feel
-export const DAMPING = 1.9; // v *= exp(-DAMPING * dt); ~rest in 1.5s
+export const DAMPING = 1.55; // v *= exp(-DAMPING * dt); icy — momentum carries
 export const ROT_SPEED = 16; // rad/s (~900 deg/s)
 export const FIRE_COOLDOWN = 0.45; // s
 export const RECOIL_IMPULSE = 300; // wu/s added opposite shot
 export const SHELL_SPEED = 950; // wu/s
 export const SHELL_RANGE = 640; // wu before self-detonation
-export const HIT_IMPULSE = 460; // wu/s on direct hit, along shell travel
-export const AOE_RADIUS = 140; // wu
-export const AOE_IMPULSE = 270; // wu/s at epicenter, linear falloff
+export const HIT_IMPULSE = 640; // wu/s on direct hit, along shell travel
+export const AOE_RADIUS = 150; // wu
+export const AOE_IMPULSE = 340; // wu/s at epicenter, linear falloff
 export const SELF_HIT_GRACE = 0.12; // s a shell can't hit its owner
 export const TANK_RESTITUTION = 0.85; // tank-tank bounce
 export const WALL_RESTITUTION = 0.6;

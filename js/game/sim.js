@@ -41,7 +41,7 @@ export function createMatch({ mode, mapId, players }) {
 export function addTank(state, { id, name, colorIdx, isBot = false, botSkill = 0.7 }) {
   const tank = {
     id, name, colorIdx, isBot, botSkill,
-    bot: isBot ? { nextThink: 0.5 + Math.random() * 0.5 } : null,
+    bot: isBot ? { nextThink: 0.5 + Math.random() * 0.5, dangerT: 0 } : null,
     x: 0, y: 0, px: 0, py: 0, vx: 0, vy: 0,
     angle: 0, pangle: 0, targetAngle: 0, queued: false, cooldown: 0,
     radius: TANK_RADIUS,
