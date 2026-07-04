@@ -1,8 +1,8 @@
 // Pure, DOM-free simulation. One source of truth for host, solo, and bots.
 // Drivers call: createMatch → applyTap (on input) → step(dt) → drain returned events.
-import { TANK_RADIUS, SHELL_RADIUS, DAMPING, ROT_SPEED, FIRE_COOLDOWN, RECOIL_IMPULSE, SHELL_SPEED, SHELL_RANGE, HIT_IMPULSE, AOE_RADIUS, AOE_IMPULSE, SELF_HIT_GRACE, TANK_RESTITUTION, WALL_RESTITUTION, BUMP_MIN_SPEED, FALL_TIME, RESPAWN_TIME, SPAWN_SHIELD, KILL_CREDIT_WINDOW, RUMBLE_DURATION, LTS_ROUND_WINS, COUNTDOWN, ROUND_END_PAUSE, MATCH_END_PAUSE, } from './constants.js';
+import { TANK_RADIUS, SHELL_RADIUS, DAMPING, ROT_SPEED, FIRE_COOLDOWN, RECOIL_IMPULSE, SHELL_SPEED, SHELL_RANGE, HIT_IMPULSE, AOE_RADIUS, AOE_IMPULSE, SELF_HIT_GRACE, TANK_RESTITUTION, WALL_RESTITUTION, BUMP_MIN_SPEED, FALL_GRACE_RATIO, FALL_TIME, RESPAWN_TIME, SPAWN_SHIELD, KILL_CREDIT_WINDOW, RUMBLE_DURATION, LTS_ROUND_WINS, COUNTDOWN, ROUND_END_PAUSE, MATCH_END_PAUSE, } from './constants.js';
 import { mapById } from './maps.js';
-import { supported, resolveCircleCircle, bounceOffWall, angleLerpToward, angleDiff, } from '../engine/physics.js';
+import { supportedWithGrace, resolveCircleCircle, bounceOffWall, angleLerpToward, angleDiff, } from '../engine/physics.js';
 export function createMatch({ mode, mapId, players }) {
     const state = {
         mode, // 'rumble' | 'lts' | 'sandbox'
@@ -315,7 +315,8 @@ export function step(state, dt) {
         state.shells = state.shells.filter((s) => !deadShells.has(s.id));
     // --- Falling off the world ----------------------------------------------
     for (const tank of state.tanks) {
-        if (tank.state === 'active' && !supported(state.map, tank.x, tank.y)) {
+        if (tank.state === 'active'
+            && !supportedWithGrace(state.map, tank.x, tank.y, tank.radius * FALL_GRACE_RATIO)) {
             tank.state = 'falling';
             tank.stateT = 0;
             const fresh = state.time - tank.lastHitT < KILL_CREDIT_WINDOW;

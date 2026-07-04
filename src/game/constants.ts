@@ -19,6 +19,7 @@ export const WALL_RESTITUTION = 0.6;
 export const BUMP_MIN_SPEED = 60; // relative speed for a bump to count as a "hit"
 
 // Death / respawn
+export const FALL_GRACE_RATIO = 2 / 3; // of tank radius: how far past the floor edge the center may hang
 export const FALL_TIME = 0.7; // s of falling animation before death
 export const RESPAWN_TIME = 2.5; // s
 export const SPAWN_SHIELD = 1.5; // s of impulse immunity after spawn

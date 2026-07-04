@@ -94,3 +94,10 @@ Criterion for every call: **optimize for fun**. Newest at the bottom.
     guest's interpolated ghost state satisfy. Verified post-conversion: clean
     strict compile, identical balance-harness profile, and a two-browser
     lobby → launch → tap round-trip on the compiled build.
+29. **Ledge forgiveness (requested):** a tank only falls once its center is more
+    than ⅔·radius past the floor edge (`FALL_GRACE_RATIO`), implemented as a
+    signed-distance test against the floor union so it applies uniformly to
+    outer edges, the notch corners where overlapping floor boxes meet, and hole
+    rims. Verified at 10 wu past an edge (stays) vs 20 wu (falls), and the same
+    at the Donut hole rim. Balance after: 54/49/32/12 KOs per 5 min — Quad
+    dropped most (48→32), which is the unsatisfying corner deaths going away.

@@ -20,7 +20,8 @@ export function supported(map, x, y) {
             return true;
     return false;
 }
-// Distance from a supported point to the nearest dropoff (floor edge or hole edge).
+// Distance from a supported point to the nearest dropoff (floor edge or hole
+// edge). Negative when past the edge: how far off the floor the point is.
 export function edgeMargin(map, x, y) {
     let best = -Infinity;
     for (const f of map.floors)
@@ -28,6 +29,12 @@ export function edgeMargin(map, x, y) {
     for (const h of map.holes)
         best = Math.min(best, sdfRoundedRect(h, x, y));
     return best; // >0 means this many wu from the nearest edge
+}
+// Support test with ledge forgiveness: still supported while the center is no
+// more than `grace` past the floor edge (or into a hole). Smooths the harsh
+// notch corners where overlapping floor boxes meet.
+export function supportedWithGrace(map, x, y, grace) {
+    return edgeMargin(map, x, y) >= -grace;
 }
 // Circle vs solid rounded rect. Returns null or the push-out normal + depth
 // (normal points away from the rect).

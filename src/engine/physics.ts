@@ -30,12 +30,20 @@ export function supported(map: MapDef, x: number, y: number): boolean {
   return false;
 }
 
-// Distance from a supported point to the nearest dropoff (floor edge or hole edge).
+// Distance from a supported point to the nearest dropoff (floor edge or hole
+// edge). Negative when past the edge: how far off the floor the point is.
 export function edgeMargin(map: MapDef, x: number, y: number): number {
   let best = -Infinity;
   for (const f of map.floors) best = Math.max(best, -sdfRoundedRect(f, x, y));
   for (const h of map.holes) best = Math.min(best, sdfRoundedRect(h, x, y));
   return best; // >0 means this many wu from the nearest edge
+}
+
+// Support test with ledge forgiveness: still supported while the center is no
+// more than `grace` past the floor edge (or into a hole). Smooths the harsh
+// notch corners where overlapping floor boxes meet.
+export function supportedWithGrace(map: MapDef, x: number, y: number, grace: number): boolean {
+  return edgeMargin(map, x, y) >= -grace;
 }
 
 interface WallHit {
