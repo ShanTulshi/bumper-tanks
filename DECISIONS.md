@@ -52,3 +52,16 @@ Criterion for every call: **optimize for fun**. Newest at the bottom.
     "slipped into the void" — no kill for anyone. Blast-jumping is a legit skill.
 18. **Audio is synthesized WebAudio** (no assets): thump on fire, noise-sweep
     explosions, arpeggio win sting. Mute persists in localStorage.
+
+### Found in browser validation (agent-browser)
+
+19. **Verified kill credit works** with a controlled hit → forced fall → score+1.
+    The earlier "all scores 0" was not a credit bug — it was bots flinging
+    *themselves* into the void (40 self-falls in one session).
+20. **Bots are now recoil-aware**: before an attack shot they project the recoil
+    drift (at 0.35 s and at rest, v/damping) and skip shots that would carry them
+    off; instead they take a repositioning shot. Survival reflex (brake/step-in)
+    now runs every tick instead of on the think timer. *Fun:* bots that respect
+    the void are worth outplaying; scores now come from real knockouts.
+21. **Death camera drifts back to the arena center** instead of staring at the
+    empty void where you fell.

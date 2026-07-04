@@ -260,7 +260,8 @@ class LocalSession {
       if (n) camera.follow(cx / n, cy / n, dt * 0.25);
     } else {
       const me = getTank(this.state, this.myId);
-      if (me && me.state !== 'dead') camera.follow(me.x, me.y, dt);
+      if (me && (me.state === 'active' || me.state === 'falling')) camera.follow(me.x, me.y, dt);
+      else camera.follow(0, 0, dt * 0.35); // dead: drift back to the arena
     }
     if (this.state.phase === 'over' && this.state.phaseT <= 0 && !this.overFired) {
       this.overFired = true;
@@ -434,7 +435,8 @@ class GuestSession {
       sh.y += sh.vy * dt;
     }
     const me = this.tanksById.get(this.myId);
-    if (me && me.state !== 'dead') camera.follow(me.x, me.y, dt);
+    if (me && (me.state === 'active' || me.state === 'falling')) camera.follow(me.x, me.y, dt);
+    else camera.follow(0, 0, dt * 0.35); // dead/ghost: drift back to the arena
     particles.update(dt);
     camera.update(dt);
   }
