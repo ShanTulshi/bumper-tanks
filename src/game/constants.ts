@@ -5,7 +5,7 @@ export const SHELL_RADIUS = 7;
 
 // Movement / feel
 export const DAMPING = 1.55; // v *= exp(-DAMPING * dt); icy — momentum carries
-export const ROT_SPEED = 16; // rad/s (~900 deg/s)
+export const ROT_SPEED = 30; // rad/s (~1720 deg/s)
 export const FIRE_COOLDOWN = 0.45; // s
 export const RECOIL_IMPULSE = 450; // wu/s added opposite shot
 export const SHELL_SPEED = 950; // wu/s
